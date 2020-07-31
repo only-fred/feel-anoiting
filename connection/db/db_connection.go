@@ -30,7 +30,5 @@ func Connection() *sql.DB {
 		log.Fatal(err)
 	}
 
-	fmt.Print("Connected!")
-
 	return db
 }

@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	api "./connection/api"
-	_ "./connection/db"
+	control "./control"
 )
 
 func main() {
@@ -16,7 +17,7 @@ func main() {
 			userAnswer int
 		)
 
-		fmt.Print("|| [1] View all || [2] Search by ID || [3] Search by country || [0] Cancel\n->")
+		fmt.Print("[1] View all \n[2] World \n[3] Search by ID \n[4] Search by country \n\n[5] Update and Read Database \n[6] Compare datas\n\n[0] Cancel\n->")
 		fmt.Scanf("%d", &userAnswer)
 
 		respObj := api.ConsumingAPI()
@@ -26,9 +27,14 @@ func main() {
 			for i := 0; i < len(respObj.Features); i++ {
 				api.ShowAttributes(respObj, i)
 			}
+			fmt.Printf("\nTotal: %d", len(respObj.Features))
 			break
 
 		case 2:
+			api.ShowSumAttributes(respObj)
+			break
+
+		case 3:
 			var searchByID int
 
 			fmt.Print("Type the ID: \n->")
@@ -41,7 +47,7 @@ func main() {
 			}
 			break
 
-		case 3:
+		case 4:
 			var (
 				userAnswer string
 
@@ -73,6 +79,31 @@ func main() {
 			}
 			break
 
+		case 5:
+			timeNow := timeNow()
+			lastUpdate := control.Read()
+
+			if timeNow != lastUpdate {
+				for i := 0; i < len(respObj.Features); i++ {
+					id := respObj.Features[i].Attributes.OBJECTID
+					state := respObj.Features[i].Attributes.ProvinceState
+					country := respObj.Features[i].Attributes.CountryRegion
+					confirmed := respObj.Features[i].Attributes.Confirmed
+					recovered := respObj.Features[i].Attributes.Recovered
+					deaths := respObj.Features[i].Attributes.Deaths
+					active := respObj.Features[i].Attributes.Active
+
+					control.Update(state, country, timeNow, confirmed, recovered, deaths, active, id)
+				}
+				fmt.Print("Successfully updated")
+
+			} else {
+				fmt.Print("Nothing to update")
+			}
+
+			control.ReadAll()
+			break
+
 		case 0:
 			break
 
@@ -84,8 +115,16 @@ func main() {
 			fmt.Print("\nTry again? (YES/NO)\n->")
 			fmt.Scanf("%s", &loopAnswer)
 			loopAnswer = strings.ToUpper(loopAnswer)
+
 		}
 	}
+}
 
-	// conn.Connection()
+func timeNow() string {
+	const layout = "02/01/2006"
+	timeNow := time.Now()
+
+	realTimeNow := timeNow.Format(layout) //Convert to string, IDK D:
+
+	return realTimeNow
 }
